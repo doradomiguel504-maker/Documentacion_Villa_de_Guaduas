@@ -1,0 +1,432 @@
+<!DOCTYPE html> <!-- Le decimos al navegador que este archivo es un HTML5 moderno pa' que no se enrede -->
+<html lang="es"> <!-- Configuramos todo el documento en español pa' que los lectores de pantalla lo entiendan -->
+<head> <!-- Abrimos la cabeza del documento, aquí va la configuración oculta -->
+    <meta charset="UTF-8"> <!-- Súper importante: esto es pa' que nos lea bien las tildes y las eñes (ñ) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Hace que la página se vea bien en celulares y no se vea chiquitica -->
+    <title>Villa de Guaduas - Login con Autocompletado</title> <!-- Este es el nombre que sale en la pestañita del navegador -->
+    
+    <style> /* Aquí abrimos la etiqueta de estilos pa' meterle todo el diseño (CSS) */
+        
+        :root { /* En esta raíz guardamos los colores como variables, pa' no tener que memorizar códigos raros */
+            --fondo-oscuro: #2a160d; /* El color café bien oscuro pa' todo el fondo de atrás */
+            --dorado: #d49555; /* El color naranja/dorado pa' los botones y las letras que queremos resaltar */
+            --panel-bg: rgba(20, 20, 20, 0.95); /* El fondo negro de las cajas, le puse 0.95 pa' que sea un tris transparente */
+            --borde-panel: rgba(255, 255, 255, 0.08); /* Un borde blanquito casi invisible pa' que la caja no quede plana */
+            --texto-blanco: #ffffff; /* Color blanco puro pa' los títulos principales */
+            --texto-gris: #a6958a; /* Un color tierrita/gris pa' los textos secundarios pa' no cansar los ojos */
+            --hover-boton: rgba(212, 149, 85, 0.15); /* Naranja transparente pa' cuando uno le pasa el mouse al botón */
+            
+            --color-admin: #d49555; /* Color dorado específico pa' la pastilla del Administrador */
+            --color-almacen: #8b5cf6; /* Color moradito específico pa' la pastilla de Almacén */
+            --color-prod: #d946ef; /* Color fucsia específico pa' la pastilla de Producción */
+            --color-prov: #10b981; /* Color verde específico pa' la pastilla de Proveedor */
+        } /* Cerramos la zona de variables de color */
+
+        * { /* El asterisco significa "afectar a TODO el documento" */
+            margin: 0; /* Le quitamos las márgenes que los navegadores traen por defecto */
+            padding: 0; /* Le quitamos los rellenos automáticos a todo */
+            box-sizing: border-box; /* Hace que los bordes no engorden las cajas y dañen el diseño */
+            font-family: system-ui, -apple-system, sans-serif; /* Usamos la fuente nativa del computador o celular pa' que cargue rápido */
+        } /* Cerramos el reseteo de todo */
+
+        body { /* Aquí empezamos a pintar el fondo de tooooda la pantalla */
+            background-color: var(--fondo-oscuro); /* Le metemos el café oscuro que guardamos arriba */
+            background-image: radial-gradient(circle at 50% 100%, #3e2214 0%, #150a05 100%); /* Le ponemos un foco de luz desde abajo pa' que se vea elegante */
+            color: var(--texto-blanco); /* Hacemos que toda la letra base sea blanca */
+            min-height: 100vh; /* Obligamos a que el fondo mida por lo menos el 100% de la altura de la pantalla (Viewport Height) */
+            display: flex; /* Activamos el modo flexible pa' poder centrar las cosas fácil */
+            align-items: center; /* Centramos el contenido de arriba hacia abajo (eje Y) */
+            justify-content: center; /* Centramos el contenido de izquierda a derecha (eje X) */
+            overflow-x: hidden; /* Cortamos cualquier cosa que se salga por los lados pa' que no salga barra de scroll horizontal */
+        } /* Cerramos el estilo del body */
+
+        .pantalla { /* Esta clase se la ponemos a las 3 pantallas pa' controlarlas juntas */
+            display: none; /* TRUCAZO: Las desaparecemos todas por defecto pa' que no se amontonen */
+            width: 100%; /* Que cada pantalla intente ocupar todo el ancho */
+            animation: aparecer 0.4s ease-out forwards; /* Le conectamos la animación de abajo pa' que aparezcan suavecito */
+        } /* Cerramos la clase base de las pantallas */
+
+        .pantalla.activa { /* Pero si una pantalla tiene la clase "activa"... */
+            display: flex; /* Le quitamos el display:none y la mostramos como flex */
+            flex-direction: column; /* Hacemos que su contenido se apile hacia abajo (en columna) */
+            align-items: center; /* Centramos todo lo que tenga adentro */
+        } /* Cerramos la clase activa */
+
+        @keyframes aparecer { /* Aquí creamos la animación que se llama "aparecer" */
+            from { opacity: 0; transform: translateY(10px); } /* Arranca totalmente transparente y 10 píxeles más abajo */
+            to { opacity: 1; transform: translateY(0); } /* Termina viéndose completa y en su posición original */
+        } /* Cerramos la animación */
+
+        .hero-inicio { /* Esta es la caja pa' los textos grandotes de la primera pantalla */
+            text-align: center; /* Centramos todo el texto que está adentro */
+            margin-bottom: 40px; /* Le dejamos un hueco abajo pa' que no se pegue a la caja negra de botones */
+        } /* Cerramos el hero */
+        
+        .hero-inicio h1 { font-size: 42px; margin-bottom: 10px; } /* Al título gigante le ponemos 42px y un espacito abajo */
+        .hero-inicio h1 span { color: var(--dorado); } /* A la palabra que está en el span la pintamos de dorado */
+        .hero-inicio p { color: var(--texto-gris); font-size: 14px; margin-bottom: 30px; } /* Al parrafito le ponemos gris y 14px */
+        
+        .stats { display: flex; justify-content: center; gap: 50px; } /* A la zona de los números (20+, 4, 100%) los ponemos en fila y separados por 50px */
+        .stat-item { text-align: center; }  /* Cada bloquecito de número lo centramos */
+        .stat-item h3 { font-size: 24px; } /* El número (ej. 20+) lo ponemos grandecito de 24px */
+        .stat-item p { font-size: 10px; color: var(--texto-gris); text-transform: uppercase; } /* El textito de abajo del número en mayúsculas y gris */
+
+        .panel-ancho { /* Esta es la caja negra principal (la ancha) */
+            background: var(--panel-bg); /* Le metemos el negro transparente de arriba */
+            border: 1px solid var(--borde-panel); /* Le ponemos su bordecito blanco disimulado */
+            border-radius: 16px; /* Le redondeamos las 4 esquinas */
+            padding: 30px 40px; /* Le damos espacio por dentro (arriba/abajo 30, lados 40) */
+            width: 90%; /* Que ocupe el 90% del celular... */
+            max-width: 800px; /* ...pero que nunca pase de 800px si es en un monitor gigante */
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5); /* Le clavamos una sombra bien oscura pa' que se vea como despegada del fondo */
+        } /* Cerramos la caja ancha */
+
+        .grid-botones { /* El contenedor pa' poner los dos botones grandes lado a lado */
+            display: grid; /* Usamos CSS Grid pa' hacer una cuadrícula perfecta */
+            grid-template-columns: 1fr 1fr; /* Le decimos que haga 2 columnas igualitas (1 fracción pa' cada una) */
+            gap: 15px; /* Que haya 15 píxeles de hueco entre los dos botones */
+            margin-top: 20px; /* Lo despegamos de los textos de arriba */
+        } /* Cerramos el grid */
+
+        .card-btn { /* Estos son los estilos pa' los botones grandotes de "Ingreso al sistema" */
+            background: rgba(255,255,255,0.03); /* Un grisito súper súper oscuro y transparente */
+            border: 1px solid var(--borde-panel); /* Su bordecito normal */
+            border-radius: 12px; /* Esquinas redonditas */
+            padding: 15px; /* Espacio por dentro pa' que el texto respire */
+            display: flex; /* Flex pa' alinear el ícono al lado de los textos */
+            align-items: center; /* Que el ícono y el texto queden centrados en altura */
+            cursor: pointer; /* Hace que el mouse se vuelva una manito cuando pase por ahí */
+            transition: all 0.2s; /* Que si le cambian un color, se demore 0.2 segundos en hacerlo pa' que no sea brusco */
+            text-align: left; /* Asegura que el texto quede siempre pegado a la izquierda */
+        } /* Cerramos el botón general */
+        
+        .card-btn:hover { background: var(--hover-boton); border-color: var(--dorado); } /* Cuando le pasan el mouse (hover), se vuelve naranjita */
+        .card-btn.dorado { background: var(--hover-boton); border-color: var(--dorado); } /* Si el botón ya tiene la clase "dorado", lo dejamos naranjita fijo */
+        
+        .icono-card { /* El cuadradito de fondo que tiene el ícono por dentro (✓ o 📦) */
+            background: rgba(255,255,255,0.1); /* Fondo gris claro */
+            width: 35px; height: 35px; /* Lo obligamos a ser un cuadrado perfecto de 35x35 */
+            display: flex; align-items: center; justify-content: center; /* Centramos el ✓ justo en la mitad del cuadradito */
+            border-radius: 8px; margin-right: 15px; font-weight: bold; /* Lo redondeamos un poquito y lo separamos del texto */
+        } /* Cerramos el cuadradito del ícono */
+        
+        .card-btn.dorado .icono-card { background: var(--dorado); color: black; } /* Si la tarjeta es dorada, le pintamos el ícono dorado también */
+        .textos-card h4 { font-size: 14px; margin-bottom: 3px; } /* El título del botón a 14px */
+        .textos-card p { font-size: 11px; color: var(--texto-gris); } /* El textito secundario del botón en gris y 11px */
+
+        .panel-login { /* Ahora los estilos pa' las cajas de Login (que son más angostas) */
+            background: var(--panel-bg); /* Mismo fondo negro transparente */
+            border: 1px solid var(--borde-panel); /* Mismo borde blanco disimulado */
+            border-radius: 16px; /* Mismas esquinas redondas */
+            padding: 30px; /* Espacio por dentro de 30px por todos lados */
+            width: 90%; /* En celular ocupa el 90% */
+            max-width: 400px;  /* OJO AQUÍ: Solo 400px de ancho máximo pa' que parezca un login real de celular */
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5); /* Sombra oscura pa' flotar */
+        } /* Cerramos el panel de login */
+
+        .cabecera-login { text-align: center; margin-bottom: 25px; } /* Centramos el texto de "Bienvenido" y lo separamos de los inputs */
+        .cabecera-login h2 { font-size: 18px; margin-bottom: 5px; } /* Título del login a 18px */
+        .cabecera-login p { font-size: 11px; color: var(--texto-gris); } /* Subtítulo del login a 11px y gris */
+
+        .grupo-input { margin-bottom: 15px; }  /* Separamos los bloques de input (correo y clave) por 15px */
+        .grupo-input label { /* Esto es el texto que dice "Usuario o correo electrónico" */
+            display: flex; justify-content: space-between; /* Trucazo: empuja el label pa un lado y el enlace pa'l otro */
+            font-size: 11px; color: var(--texto-gris); margin-bottom: 5px; /* Letra chiquita, gris y separada de la cajita de texto */
+        } /* Cerramos el label */
+        .grupo-input label a { color: var(--dorado); text-decoration: none; }  /* El enlace de "Olvidó clave" se pinta dorado y sin subrayado */
+        
+        .grupo-input input { /* ESTA ES LA CAJITA DONDE UNO ESCRIBE */
+            width: 100%; padding: 12px 15px; /* Que ocupe todo el ancho y tenga buen espacio pa' que el texto no quede espichado */
+            background: rgba(255,255,255,0.03); /* Fondo casi transparente */
+            border: 1px solid var(--borde-panel); /* Su bordecito normal */
+            border-radius: 8px; color: white; outline: none;  /* Puntas redondas, texto blanco, y 'outline:none' quita el borde azul del navegador */
+        } /* Cerramos el input */
+        .grupo-input input:focus { border-color: var(--dorado); } /* Cuando le des clic al input pa' escribir, el borde se vuelve dorado */
+        
+        .btn-submit { /* Este es el botón gigante de INICIAR SESIÓN */
+            width: 100%; padding: 12px; /* Ocupa todo el ancho, buen tamaño */
+            background: var(--dorado); color: black; /* Se pinta full dorado con letra negra pa' que resalte resto */
+            border: none; border-radius: 8px; /* Le quitamos el borde feo y le redondeamos esquinas */
+            font-weight: bold; cursor: pointer; /* Letra gordita (negrita) y que salga la manito del mouse */
+            margin-top: 10px; /* Lo despegamos de la clave de arriba */
+        } /* Cerramos el botón de iniciar sesión */
+
+        .lista-demos {  /* Aquí envolvemos todas las cuentas demo pa' que queden como una lista */
+            display: flex; flex-direction: column; gap: 8px; margin-top: 15px; /* Flex columna pa' apilarlas y gap de 8px entre ellas */
+        } /* Cerramos la lista de demos */
+        
+        .demo-item { /* Esta es CADA CUENTA DEMO por separado (la cajita clickeable) */
+            display: flex; align-items: center; /* Alineamos el círculo, el texto y la pastilla en todo el centro vertical */
+            border: 1px solid var(--borde-panel); padding: 10px 15px; border-radius: 8px; /* Le ponemos su bordecito y espacio */
+            cursor: pointer; transition: background 0.2s; /* Manito de mouse y transición suave pa' cuando se ponga el mouse encima */
+        } /* Cerramos la cuenta demo */
+        .demo-item:hover { /* Cuando se pasa el mouse por la cuenta demo... */
+            background-color: rgba(255,255,255,0.05); /* ...se pinta de un blanco súper suavecito pa' dar la sensación de que se seleccionó */
+        } /* Cerramos el hover del demo */
+        
+        .avatar {  /* El circulito de la izquierda que tiene la inicial ("A", "P", etc) */
+            width: 30px; height: 30px; border-radius: 50%; /* 30x30 y 50% de radius hace un círculo perfecto */
+            display: flex; align-items: center; justify-content: center; /* Centramos la letra en el corazón del círculo */
+            font-size: 12px; font-weight: bold; margin-right: 12px; /* Letra negrita y lo separamos del texto central */
+        } /* Cerramos el avatar */
+        
+        .textos-demo h4 { font-size: 12px; margin-bottom: 2px; } /* El nombre del rol ("Administrador") a 12px */
+        .textos-demo p { font-size: 9px; color: var(--texto-gris); } /* La descripción del rol a 9px pa' que sea chiquitica */
+        
+        .etiqueta-rol { /* ESTA ES LA PASTILLITA DE COLOR QUE VA A LA DERECHA (Ej: ● Administrador) */
+            margin-left: auto; /* TRUCAZO DE FLEXBOX: Esto empuja la pastilla tooodo lo posible hacia la derecha */
+            font-size: 9px; /* Letra pequeñita */
+            padding: 4px 8px; /* Espacio mínimo pa' que parezca una pastilla */
+            border-radius: 12px; /* Redondeada a tope */
+            font-weight: bold; /* Letra negrita */
+        } /* Cerramos la etiqueta de rol */
+
+        /* =========================================================
+           AQUÍ HACEMOS QUE CADA ROL TENGA SU COLOR ESPECÍFICO
+           Cada clase le pinta el fondo transparente, la letra y el borde 
+           ========================================================= */
+        .rol-admin {  /* Todo lo de Administrador */
+            background: rgba(212, 149, 85, 0.15); color: var(--color-admin); border: 1px solid var(--color-admin); 
+        } /* Cierra admin */
+        .rol-almacen { /* Todo lo de Almacén */
+            background: rgba(139, 92, 246, 0.15); color: var(--color-almacen); border: 1px solid var(--color-almacen); 
+        } /* Cierra almacén */
+        .rol-prod { /* Todo lo de Producción */
+            background: rgba(217, 70, 239, 0.15); color: var(--color-prod); border: 1px solid var(--color-prod); 
+        } /* Cierra producción */
+        .rol-prov { /* Todo lo de Proveedores */
+            background: rgba(16, 185, 129, 0.15); color: var(--color-prov); border: 1px solid var(--color-prov); 
+        } /* Cierra proveedores */
+
+        .btn-volver { /* Estilos pa'l botoncito de "Volver al inicio" que está al final del todo */
+            background: none; border: none; /* Le quitamos todo para que no parezca un botón cuadrado normal */
+            color: var(--texto-gris); font-size: 11px; /* Lo ponemos chiquito y gris */
+            margin-top: 20px; cursor: pointer; text-decoration: underline; /* Le damos margen, ponemos manito y lo subrayamos pa' que parezca un enlace */
+        } /* Cerramos el botón de volver */
+        .btn-volver:hover { color: white; } /* Si le pasan el mouse, que se pinte blanco */
+
+        .galleta { /* Este es el dibujo de la galletita que está en el fondo estorbando pero viéndose bonita */
+            position: fixed; top: 30px; right: 10%; /* Lo fijamos a la pantalla pa' que no se mueva, arriba a la derecha */
+            width: 120px; height: 120px; background: #d49555; border-radius: 50%; z-index: -1; /* Lo mandamos p'al fondo con el z-index negativo */
+        } /* Cerramos la galleta base */
+        .galleta::after { /* Y esto es el "mordisco" de la galleta (un círculo café superpuesto) */
+            content: ''; position: absolute; top: -10px; right: -5px; /* Lo ubicamos en la esquinita de arriba */
+            width: 40px; height: 40px; background: var(--fondo-oscuro); border-radius: 50%; /* Color idéntico al fondo de la pantalla pa' que parezca que está mordida */
+        } /* Cerramos el mordisco */
+    </style> <!-- Listo papá, acabamos con todos los estilos CSS, cerramos etiqueta -->
+</head> <!-- Cerramos la cabeza del HTML -->
+<body> <!-- Abrimos el cuerpo (aquí va todo lo que SÍ se ve en la pantalla) -->
+
+    <div class="galleta"></div> <!-- Aquí llamamos a la galletita pa' que se dibuje en el fondo -->
+
+    <!-- =========================================================================================
+         PANTALLA 1: DASHBOARD PRINCIPAL (Menú para escoger)
+         Le pongo id="pantalla-inicio" pa' llamarla con JS, y le dejo la clase "activa" de una vez pa' que arranque prendida
+         ========================================================================================= -->
+    <div id="pantalla-inicio" class="pantalla activa"> <!-- Abrimos la caja de la pantalla 1 -->
+        
+        <div class="hero-inicio"> <!-- Abrimos la caja de los textos gigantes -->
+            <p style="font-size: 10px; letter-spacing: 2px;">INVENTARIO INTELIGENTE PARA PRODUCCIÓN ARTESANAL</p> <!-- Textito de arriba, con letras bien separaditas -->
+            <h1>Todo el obrador,<br><span>en perfecta armonía.</span></h1> <!-- Título grande, el <br> rompe la línea y manda "en perfecta..." para abajo -->
+            <p>Controla materias primas, producción, costos y trazabilidad desde una experiencia<br>diseñada para que cada rol trabaje con claridad.</p> <!-- Párrafo con salto de línea también -->
+            
+            <div class="stats"> <!-- Abrimos la cajita que contiene los 3 números -->
+                <div class="stat-item"><h3>20+</h3><p>Módulos conectados</p></div> <!-- El primer bloquecito (20+) -->
+                <div class="stat-item"><h3>4</h3><p>Perfiles por rol</p></div> <!-- El segundo bloquecito (4 perfiles) -->
+                <div class="stat-item"><h3>100%</h3><p>Trazabilidad operativa</p></div> <!-- El tercer bloquecito (100%) -->
+            </div> <!-- Cerramos los números -->
+        </div> <!-- Cerramos el hero gigante -->
+
+        <div class="panel-ancho"> <!-- Abrimos la primera caja negra ancha de abajo -->
+            <div style="color: #4ade80; font-size: 10px; margin-bottom: 20px; letter-spacing: 1px;"> <!-- Cabecera verdecita -->
+                ● SISTEMA OPERATIVO <span style="float: right; color: gray;">V 2.0.0</span> <!-- El puntito verde a la izq y la versión a la der -->
+            </div> <!-- Cerramos la cabecera verde -->
+            <h2 style="font-size: 20px; margin-bottom: 5px;">Bienvenido al turno</h2> <!-- Título blanco de bienvenido -->
+            <p style="font-size: 12px; color: var(--texto-gris);">Selecciona el perfil que corresponde a tu operación.</p> <!-- Textito gris de instrucciones -->
+
+            <div class="grid-botones"> <!-- Abrimos la cuadrícula pa' meter los 2 botones -->
+                <!-- BOTÓN 1: Manda al login general usando onclick="cambiarPantalla()" -->
+                <div class="card-btn dorado" onclick="cambiarPantalla('pantalla-login-general')"> <!-- Al hacer clic llama a la función de JS y le pasa el ID de la pantalla 2 -->
+                    <div class="icono-card">✓</div> <!-- El chulito -->
+                    <div class="textos-card"> <!-- Textos del botón -->
+                        <h4>Ingreso al sistema</h4> <!-- Título del botón -->
+                        <p>Equipos administrativos y producción</p> <!-- Subtítulo del botón -->
+                    </div> <!-- Cierra textos -->
+                </div> <!-- Cierra botón 1 -->
+
+                <!-- BOTÓN 2: Manda al portal de proveedores -->
+                <div class="card-btn" onclick="cambiarPantalla('pantalla-login-prov')"> <!-- Clic manda al login de proveedor (pantalla 3) -->
+                    <div class="icono-card">📦</div> <!-- El ícono de cajita -->
+                    <div class="textos-card"> <!-- Textos -->
+                        <h4>Portal de proveedores</h4> <!-- Título -->
+                        <p>Pedidos, catálogos y comunicación</p> <!-- Subtítulo -->
+                    </div> <!-- Cierra textos -->
+                </div> <!-- Cierra botón 2 -->
+            </div> <!-- Cierra la cuadrícula de botones -->
+        </div> <!-- Cierra el panel ancho negro -->
+    </div> <!-- CERRAMOS LA PANTALLA 1 DEFINITIVAMENTE -->
+
+
+    <!-- =========================================================================================
+         PANTALLA 2: LOGIN GENERAL
+         OJO: Ya no tiene la clase "activa", por eso el CSS la esconde apenas carga la página.
+         ========================================================================================= -->
+    <div id="pantalla-login-general" class="pantalla"> <!-- Abre la caja de la pantalla 2 -->
+        <div class="panel-login"> <!-- Abre la cajita negra angosta del login -->
+            <div class="cabecera-login"> <!-- Textos de arriba -->
+                <h2>Bienvenido nuevamente</h2> <!-- Título blanco -->
+                <p>Sistema de Gestión - Villa de Guaduas</p> <!-- Subtítulo gris -->
+            </div> <!-- Cierra textos de arriba -->
+
+            <!-- AQUÍ EMPIEZA EL FORMULARIO -->
+            <form onsubmit="event.preventDefault();"> <!-- Le decimos que al hundir Enter NO recargue la página (eso hace el preventDefault) -->
+                <div class="grupo-input"> <!-- Bloque del correo -->
+                    <label>Usuario o correo electrónico</label> <!-- Titulito de la cajita -->
+                    <!-- A este input le clavé un ID="correo-general" pa' que el Javascript sepa a quién inyectarle el correo -->
+                    <input id="correo-general" type="email" placeholder="Escribe tu correo..." required> <!-- El required obliga a no dejarlo vacío -->
+                </div> <!-- Cierra bloque correo -->
+                <div class="grupo-input"> <!-- Bloque de la contraseña -->
+                    <label>Contraseña <a href="#">¿Olvidaste tu contraseña?</a></label> <!-- Titulito con su enlace de olvido -->
+                    <!-- A este input le clavé un ID="clave-general" pa' que el Javascript le inyecte la clave -->
+                    <input id="clave-general" type="password" placeholder="Escribe tu contraseña..." required> <!-- Tipo password oculta las letras con bolitas -->
+                </div> <!-- Cierra bloque contraseña -->
+                <button type="submit" class="btn-submit">▶ Iniciar sesión</button> <!-- El botón amarillo de entrar -->
+            </form> <!-- CERRAMOS FORMULARIO -->
+
+            <div style="text-align: center; margin-top: 20px; margin-bottom: 15px; font-size: 10px; color: gray;">-- Cuentas de demostración --</div> <!-- Título separador de las cuentas demo -->
+            
+            <div class="lista-demos"> <!-- Abrimos la lista donde están todas las cuentas demo -->
+                
+                <!-- DEMO 1: ADMINISTRADOR -->
+                <!-- AL DAR CLIC (onclick): LLama a llenarDatos() pasándole el correo, la clave, y los 2 IDs donde tiene que meterlos -->
+                <div class="demo-item" onclick="llenarDatos('admin@villaguaduas.co', 'soyElAdmin123', 'correo-general', 'clave-general')"> <!-- Evento click activado -->
+                    <div class="avatar rol-admin">A</div> <!-- Círculo con la A -->
+                    <div class="textos-demo"> <!-- Textos del centro -->
+                        <h4>Administrador</h4> <!-- Título de la cuenta -->
+                        <p>Completo + Indicadores</p> <!-- Descripción -->
+                    </div> <!-- Cierra textos -->
+                    <div class="etiqueta-rol rol-admin">● Administrador</div> <!-- Pastillita de color derecha -->
+                </div> <!-- Cierra Admin -->
+
+                <!-- DEMO 2: AUXILIAR DE ALMACÉN -->
+                <!-- Pasa el correo y clave del almacén a los inputs generales -->
+                <div class="demo-item" onclick="llenarDatos('almacen@villaguaduas.co', 'almacenSeguro123', 'correo-general', 'clave-general')"> <!-- Evento click activado -->
+                    <div class="avatar rol-almacen">A</div> <!-- Círculo morado -->
+                    <div class="textos-demo"> <!-- Textos -->
+                        <h4>Auxiliar de Almacén</h4> <!-- Título -->
+                        <p>Compras e inventarios</p> <!-- Descripción -->
+                    </div> <!-- Cierra textos -->
+                    <div class="etiqueta-rol rol-almacen">● Aux. de Almacén</div> <!-- Pastillita morada -->
+                </div> <!-- Cierra Almacén -->
+
+                <!-- DEMO 3: OPERARIO DE PRODUCCIÓN -->
+                <!-- Pasa el correo y clave de producción a los inputs generales -->
+                <div class="demo-item" onclick="llenarDatos('produccion@villaguaduas.co', 'produciendoAndo123', 'correo-general', 'clave-general')"> <!-- Evento click activado -->
+                    <div class="avatar rol-prod">O</div> <!-- Círculo fucsia -->
+                    <div class="textos-demo"> <!-- Textos -->
+                        <h4>Operario Producción</h4> <!-- Título -->
+                        <p>La Cabaña de Producción</p> <!-- Descripción -->
+                    </div> <!-- Cierra textos -->
+                    <div class="etiqueta-rol rol-prod">● Producción</div> <!-- Pastillita fucsia -->
+                </div> <!-- Cierra Producción -->
+                
+            </div> <!-- Cerramos la lista de demos generales -->
+        </div> <!-- Cerramos la caja negra angosta del login 2 -->
+        
+        <!-- Botón devolverse: cambia la pantalla mandándole el ID de la primera -->
+        <button class="btn-volver" onclick="cambiarPantalla('pantalla-inicio')">← Volver al inicio</button> <!-- Fin de botón de volver -->
+    </div> <!-- CERRAMOS LA PANTALLA 2 DEFINITIVAMENTE -->
+
+
+    <!-- =========================================================================================
+         PANTALLA 3: LOGIN DE PROVEEDORES
+         También oculta por defecto hasta que el JS la llame.
+         ========================================================================================= -->
+    <div id="pantalla-login-prov" class="pantalla"> <!-- Abrimos caja de pantalla 3 -->
+        <div class="panel-login"> <!-- Caja negra angosta -->
+            <div class="cabecera-login"> <!-- Cabecera del login -->
+                <h2>Portal de proveedores</h2> <!-- Título diferente (proveedores) -->
+                <p>Pedidos, materiales y comunicación</p> <!-- Subtítulo -->
+            </div> <!-- Cierra cabecera -->
+
+            <form onsubmit="event.preventDefault();"> <!-- Formulario sin recarga -->
+                <div class="grupo-input"> <!-- Bloque correo -->
+                    <label>Usuario o correo electrónico</label> <!-- Label normal -->
+                    <!-- A este le puse un ID DIFERENTE ("correo-prov") pa' que no se cruce con el del login general -->
+                    <input id="correo-prov" type="email" placeholder="Escribe tu correo..." required> <!-- Cajita de texto -->
+                </div> <!-- Cierra bloque correo -->
+                <div class="grupo-input"> <!-- Bloque clave -->
+                    <label>Contraseña <a href="#">¿Olvidaste tu contraseña?</a></label> <!-- Label con link -->
+                    <!-- ID DIFERENTE ("clave-prov") pa' no cruzar cables -->
+                    <input id="clave-prov" type="password" placeholder="Escribe tu contraseña..." required> <!-- Cajita oculta pa' contraseña -->
+                </div> <!-- Cierra bloque clave -->
+                <button type="submit" class="btn-submit">▶ Iniciar sesión</button> <!-- Botón amarillo -->
+            </form> <!-- Cierra formulario -->
+
+            <div style="text-align: center; margin-top: 20px; margin-bottom: 15px; font-size: 10px; color: gray;">-- Cuentas de demostración --</div> <!-- Separador -->
+            
+            <div class="lista-demos"> <!-- Lista de demos (aquí solo hay una) -->
+                
+                <!-- DEMO 4: PROVEEDOR GENA -->
+                <!-- AL DAR CLIC: Le manda a llenarDatos() el correo de proveedor, pero fíjate que ahora le manda 'correo-prov' y 'clave-prov' -->
+                <div class="demo-item" onclick="llenarDatos('proveedor.gena@guaduas.co', 'claveProveedor456', 'correo-prov', 'clave-prov')"> <!-- Evento de llenado automático -->
+                    <div class="avatar rol-prov">P</div> <!-- Letra verde -->
+                    <div class="textos-demo"> <!-- Textos -->
+                        <h4>Proveedor Gena</h4> <!-- Título -->
+                        <p>Cotizaciones y envíos</p> <!-- Subtítulo -->
+                    </div> <!-- Cierra textos -->
+                    <div class="etiqueta-rol rol-prov">● Proveedor</div> <!-- Pastilla verde -->
+                </div> <!-- Cierra proveedor -->
+                
+            </div> <!-- Cierra lista demos de proveedor -->
+        </div> <!-- Cierra caja negra -->
+
+        <!-- Botón devolverse: cambia la pantalla mandándole el ID de la primera -->
+        <button class="btn-volver" onclick="cambiarPantalla('pantalla-inicio')">← Volver al inicio</button> <!-- Fin de botón de volver -->
+    </div> <!-- CERRAMOS LA PANTALLA 3 DEFINITIVAMENTE -->
+
+
+    <!-- =========================================================================================
+         LA ZONA DEL JAVASCRIPT (EL MOTORCITO QUE HACE LA MAGIA VIVA)
+         ========================================================================================= -->
+    <script> /* Abrimos etiqueta de script pa' meter código Javascript */
+
+        /* 
+           FUNCION 1: CAMBIAR PANTALLAS
+           Esta la hicimos antes. Recibe un nombre (id) y apaga todo para prender solo ese.
+        */
+        function cambiarPantalla(idPantallaDestino) { /* Declaramos la función que pide como parámetro el id de la pantalla a mostrar */
+            let todasLasPantallas = document.querySelectorAll('.pantalla'); /* Atrapamos en una lista a todas las etiquetas HTML que tengan la clase "pantalla" */
+            
+            todasLasPantallas.forEach(function(pantalla) { /* Hacemos un bucle: cogemos una por una todas las pantallas encontradas... */
+                pantalla.classList.remove('activa'); /* ...y les arrancamos la clase "activa" para que el CSS de arriba las esconda. */
+            }); /* Fin del bucle que esconde todo */
+            
+            let pantallaDestino = document.getElementById(idPantallaDestino); /* Buscamos específicamente la pantalla a la que queremos ir (usando el ID que le mandamos) */
+            pantallaDestino.classList.add('activa'); /* Le ponemos la clase "activa" SOLAMENTE a esa pantalla para que el CSS la muestre. */
+        } /* Fin de la función de cambiar pantallas */
+
+
+        /* 
+           FUNCION 2 (NUEVA): AUTOCOMPLETAR EL LOGIN
+           Esta función es la que pediste: cuando le das clic a la cuenta demo, 
+           agarra el correo y la contraseña que le mandamos por HTML y las zampa en las cajas de texto de arriba.
+           Le pedimos 4 cosas: el email, el password, y cómo se llaman las cajitas donde los va a meter (idCajitaEmail, idCajitaClave)
+        */
+        function llenarDatos(email, password, idCajitaEmail, idCajitaClave) { /* Creamos la función con sus 4 parámetros pa' saber qué meter y en dónde */
+            
+            let cajitaEmail = document.getElementById(idCajitaEmail); /* Buscamos en el HTML la cajita de texto donde va el correo (ej. "correo-general") */
+            cajitaEmail.value = email; /* A esa cajita le decimos que su "valor" (lo que tiene escrito adentro) va a ser el correo que le mandamos por parámetro */
+            
+            let cajitaClave = document.getElementById(idCajitaClave); /* Buscamos en el HTML la cajita de texto donde va la contraseña (ej. "clave-general") */
+            cajitaClave.value = password; /* Le zampamos la contraseña directamente a esa cajita de texto */
+            
+            /* (Opcional, pero se ve fino): Como el usuario ya le dio clic al demo, le ponemos el cursor en el botón de INICIAR SESIÓN o que brille un poquito, 
+               pero por ahora con solo llenarle las cajas ya cumple perfecto con lo que pediste! */
+            
+        } /* Fin de la función de llenar datos */
+
+    </script> <!-- Cerramos la etiqueta de Javascript -->
+
+</body> <!-- Cerramos el cuerpo del HTML (ya se acabó lo visual) -->
+</html> <!-- CERRAMOS EL DOCUMENTO HTML COMPLETO, SE ACABÓ ESTA VAINA -->
